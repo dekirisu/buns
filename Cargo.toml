@@ -5,7 +5,15 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 authors = ["Dekirisu <dekirisu@gmail.com>"]
-description = "Define token patterns."
+description = "Create simple code templates - basically macro_rules lite"
 keywords = ["macro","utility"]
 repository = "https://github.com/dekirisu/buns"
-documentation = "https://docs.rs/buns"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+maflow = "0.1"
+extension-traits = "2.0"
