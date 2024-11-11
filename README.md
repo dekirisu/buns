@@ -27,7 +27,7 @@ buns::sandwich!{
 This can be seen as a simplified `macro_rules!{}`, where you prepare named **Buns** and add the **Toppings** later using the generated macro (The code (Buns) is automatically added to the macro documentation):
 ```rust
 buns::prepare!{
-	burger           // Name
+    burger           // Name
     let a = ^0 + ^0; // Buns
     println!("{a}"); // "
 }
