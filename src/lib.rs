@@ -3,6 +3,28 @@ use proc_macro::TokenStream as CompilerTokens;
 
 // Compose \\
 
+    #[ext(trait Testyy)]
+    impl PeekIter {
+        fn split_punct_duo(mut self,puncts:[char;2]) -> Vec<TokenStream> {
+            let mut out = vec![];
+            let mut curr = vec![];
+            while let Some(tree) = self.next() {
+                if tree.is_punct(puncts[0]) && self.peek_punct() == puncts[1] {
+                    self.next();
+                    if !curr.is_empty(){
+                        out.push(TokenStream::from_iter(std::mem::take(&mut curr)));
+                    }
+                    continue
+                }
+                curr.push(tree);
+            }
+            if !curr.is_empty(){
+                out.push(TokenStream::from_iter(curr));
+            }
+            out
+        }
+    }
+
     /// Create a code template and use it right after:
     ///
     /// 1. Write the code, use ^0 ^1 .. ^N as placeholders
@@ -19,11 +41,20 @@ use proc_macro::TokenStream as CompilerTokens;
     #[proc_macro]
     pub fn compose(item:CompilerTokens) -> CompilerTokens {    
         let item: TokenStream = item.into();
-        let mut tokens = item.into_iter();
+        let iter = item.peek_iter();
+        let mut out = qt!{};
+        for stream in iter.split_punct_duo(['-','-']){
+            out.extend(compose_block(stream));
+        }
+        out.into()
+    }
+
+    fn compose_block(stream:TokenStream) -> TokenStream {
+       let mut tokens = stream.into_iter();
         // collect buns, nom 
         let mut buns = vec![];
         for a in &mut tokens {
-            hold!{if a.is_punct() && a.equal_to_str("#")}
+            hold!{if a.is_any_punct() && a.equal_to_str("#")}
             buns.push(a);
         }
         let buns = TokenStream::from_iter(buns);
@@ -50,7 +81,7 @@ use proc_macro::TokenStream as CompilerTokens;
         for ingredients in patties {
             sandwiches.push(make_sandwich(buns.clone(),&ingredients));
         }
-        TokenStream::from_iter(sandwiches).into() 
+        TokenStream::from_iter(sandwiches)
     }
 
     /// Place one chunk of inserts (#0^1^..^N) into the code placeholders (^0 ^1 .. ^N)
@@ -74,7 +105,7 @@ use proc_macro::TokenStream as CompilerTokens;
                     may_id = false;
                 }
                 false => {
-                    may_id = crumb.is_punct() && crumb.equal_to_str("^");
+                    may_id = crumb.is_any_punct() && crumb.equal_to_str("^");
                     out.push(crumb);
                 }
             }
@@ -124,7 +155,7 @@ use std::str::FromStr;
 
     type VecX3<T> = Vec<Vec<Vec<T>>>;
 
-    #[ext(trait TokenStreamExt)]
+    #[ext(trait BunsTokenStreamExt)]
     impl TokenStream {
         fn to_docs(&self) -> TokenStream {
             TokenStream::from_str(
@@ -135,7 +166,7 @@ use std::str::FromStr;
         }
     }
 
-    #[ext(trait TokenTreeExt)]
+    #[ext(trait BunsTokenTreeExt)]
     impl TokenTree {
         fn is_literal(&self) -> bool {match self {
             Self::Literal(_) => true,
@@ -145,13 +176,13 @@ use std::str::FromStr;
             exit!{if !self.is_literal()}
             self.parse::<isize>().yay()
         }
-        fn is_punct(&self) -> bool {match self {
+        fn is_any_punct(&self) -> bool {match self {
             Self::Punct(_) => true,
             _ => false
         }}
         /// to_string with type check
         fn punct_string<'a>(&self) -> String {
-            exit!{if !self.is_punct()}
+            exit!{if !self.is_any_punct()}
             self.to_string()
         }
         fn equal_to_str(&self,text:&str) -> bool {

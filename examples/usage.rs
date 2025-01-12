@@ -11,6 +11,15 @@ buns::prepare!{testy
     println!("{a}");
 }
 
+buns::compose!{
+    const ^0: u32 = ^1;
+    #SEPARATE_0   ^ 10
+    #SEPARATE_1   ^ 10
+    --
+    const ^0: u16 = ^1;
+    #SEPARATE_2   ^ 10
+}
+
 fn main(){
     testy!{#1 #TEST #4+4 #OMEGA #2*2}
 }
