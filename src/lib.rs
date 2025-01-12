@@ -1,7 +1,5 @@
-use proc_macro::{Group, TokenStream, TokenTree};
-use proc_macro2::TokenStream as Token2;
-use quote::quote;
-use maflow::*;
+use deki::*;
+use proc_macro::TokenStream as CompilerTokens;
 
 // Compose \\
 
@@ -11,7 +9,7 @@ use maflow::*;
     /// 2. Write the inserts: #0^1^..^N (numbers = any code)
     /// 3. Here is the point of it: repeat 2. if necessary
     #[proc_macro]
-    pub fn sandwich(item:TokenStream) -> TokenStream {compose(item)}
+    pub fn sandwich(item:CompilerTokens) -> CompilerTokens {compose(item)}
     
     /// Create a code template and use it right after:
     ///
@@ -19,7 +17,8 @@ use maflow::*;
     /// 2. Write the inserts: #0^1^..^N (numbers = any code)
     /// 3. Here is the point of it: repeat 2. if necessary
     #[proc_macro]
-    pub fn compose(item:TokenStream) -> TokenStream {    
+    pub fn compose(item:CompilerTokens) -> CompilerTokens {    
+        let item: TokenStream = item.into();
         let mut tokens = item.into_iter();
         // collect buns, nom 
         let mut buns = vec![];
@@ -51,7 +50,7 @@ use maflow::*;
         for ingredients in patties {
             sandwiches.push(make_sandwich(buns.clone(),&ingredients));
         }
-        TokenStream::from_iter(sandwiches) 
+        TokenStream::from_iter(sandwiches).into() 
     }
 
     /// Place one chunk of inserts (#0^1^..^N) into the code placeholders (^0 ^1 .. ^N)
@@ -91,7 +90,7 @@ use maflow::*;
     /// 2. Write the code, use ^0,^1,..,^N as placeholder
     /// 3. Use it anywhere: `burger!{#0^1^..^N #0^1^..^N}` (numbers = any code)
     #[proc_macro]
-    pub fn prepare(item:TokenStream) -> TokenStream {
+    pub fn prepare(item:CompilerTokens) -> CompilerTokens {
         preset(item)
     }
 
@@ -101,13 +100,14 @@ use maflow::*;
     /// 2. Write the code, use ^0,^1,..,^N as placeholder
     /// 3. Use it anywhere: `burger!{#0^1^..^N #0^1^..^N}` (numbers = any code)
     #[proc_macro]
-    pub fn preset(item:TokenStream) -> TokenStream {
-        let mut iter = item.into_iter();    
-        let name:Token2 = TokenStream::from_iter([iter.next().unwrap()]).into();
+    pub fn preset(item:CompilerTokens) -> CompilerTokens {
+        let mut stream: TokenStream = item.into();
+        let mut iter = stream.into_iter();    
+        let name = TokenStream::from_iter([iter.next().unwrap()]);
         let code = TokenStream::from_iter(iter);
-        let docs:Token2 = code.to_docs().into();
-        let item:Token2 = code.into();
-        quote!{
+        let docs: TokenStream = code.to_docs().into();
+        let item: TokenStream = code.into();
+        qt!{
             /// buns preset, that executes:
             /// ``` rust
             #docs
@@ -120,7 +120,6 @@ use maflow::*;
     }
 
 // Helpers \\
-use extension_traits::extension as ext;
 use std::str::FromStr;
 
     type VecX3<T> = Vec<Vec<Vec<T>>>;

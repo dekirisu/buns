@@ -1,6 +1,6 @@
 [package]
 name = "buns"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
@@ -12,8 +12,6 @@ repository = "https://github.com/dekirisu/buns"
 [lib]
 proc-macro = true
 
-[dependencies]
-proc-macro2 = "1.0"
-quote = "1.0"
-maflow = "0.1"
-extension-traits = "2.0"
+[dependencies.deki]
+version = "0.2.5"
+features = ["proc"]
